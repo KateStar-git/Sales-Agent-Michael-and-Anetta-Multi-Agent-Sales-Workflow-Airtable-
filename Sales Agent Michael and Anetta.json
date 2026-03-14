@@ -1,0 +1,418 @@
+{
+  "name": "Sales Agent Michael and Anetta",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "authentication": "airtableTokenApi",
+        "baseId": {
+          "__rl": true,
+          "value": "appPqPYHDSlLLIheK",
+          "mode": "id"
+        },
+        "tableId": {
+          "__rl": true,
+          "value": "tblTAkUAVu4gOdaRZ",
+          "mode": "id"
+        },
+        "triggerField": "Created",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.airtableTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f8ac6c27-9bb3-4877-9453-0279eec02073",
+      "name": "Airtable Trigger",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "z9oc6y43aBQQqyYE",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Nowy potencjalny klient:\n\nFirst Name & Last Name: {{ $json.fields['First Name & Last Name'] }}\n\nE-mail:{{ $json.fields['E-mail'] }}\n\nPhone Number:{{ $json.fields['Phone Number'] }}\n\nCompay Name:{{ $json.fields['Company Name'] }}\n\nIntention:{{ $json.fields.Intention }}\n\nBudget:{{ $json.fields.Budget }}\n\nProject Description:{{ $json.fields['Project Description'] }}\n\nHarmonogram: {{ $json.fields.Harmonogram }}\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=Rola\nJesteś ekspertem ds. sprzedaży w agencji dostarczającej AI. Twoim zadaniem jest odpowiadanie na napływające leady, profesjonalnie odpowiadając na ich potrzeby.\nOtrzymasz informacje takie jak opis projektu i harmonogram, a Twoim celem jest przekonanie ich, że jesteśmy najlepszą agencją AI na rynku.\n\nNarzędzia\nProjekty - table w bazie danych - używaj tego narzędzia do przeszukiwania wcześniej zrealizowanych projektów.\n\nZasady.\nOtrzymasz informacje o leadzie i musisz stworzyć zwięzły, profesjonalny e-mail.\n\nTwój główny cel to przekonanie lead do umówienia się na drugą rozmowę. Spraw by uwierzył, że możemy zrealizować jego projekt i przekroczyć oczekiwania.\n\nWyszukaj informacje o odpowiednich wcześniejszych projektach, aby przedstawić je jako dowód naszych komeptencji.Wspomnij o rezultacie , jaki pomogliśmy osiągnąć klientowi.\n\nDołącz link do umwówienia rozmowy: https://cal.com/kasiaagent\n\nPodpis e-maila\nPodpisz e-mail  jako:\nKate Wow, CEO at SKYistheLimit\n\nHere is the current date / time: {{ $now }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "211e69ef-156a-4b7e-a53e-e881ae1d103f",
+      "name": "Sales Agent Anetta"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-4-20250514",
+          "mode": "list",
+          "cachedResultName": "Claude Sonnet 4"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        48,
+        256
+      ],
+      "id": "bbc7ff8a-a375-4452-834b-3b36725c8811",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "ky0Ct9egUZKvs9Ii",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "223c0268-3561-47d6-8729-40d626d29885",
+              "name": "email",
+              "value": "={{ $json.output.properties.email.description }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        560,
+        0
+      ],
+      "id": "00cba3bc-0171-4d17-8ec6-49e1afa6193b",
+      "name": "Set Email"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"subject\": {\n      \"type\": \"string\",\n      \"description\": \"Temat emaila po polsku\"\n    },\n    \"email\": {\n      \"type\": \"string\",\n      \"description\": \"Treść emaila po polsku\"\n    }\n  },\n  \"required\": [\"subject\", \"email\"]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        320,
+        304
+      ],
+      "id": "1b23ae10-0b3a-4af5-9f66-fefd0513828f",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "kmchojnowska@gmail.com",
+        "subject": "=Wymagana akceptacja dla Potencjalnego No Nowego Klienta{{ $('Airtable Trigger').item.json.fields[\"First Name & Last Name\"] }}\n\n",
+        "message": "={{ $('Airtable Trigger').item.json.fields['First Name & Last Name'] }}  from company  {{ $('Airtable Trigger').item.json.fields['Company Name'] }}  looks for {{ $('Airtable Trigger').item.json.fields.Intention }} their budget {{ $('Airtable Trigger').item.json.fields.Budget }} with harmonogram{{ $('Airtable Trigger').item.json.fields.Harmonogram }}\n\nProszę zatwierdzić lub odrzucić wysłanie tej wiadomości przez naszą agentkę sprzedaży AI Anetta.\n\nTemat: {{ $('Sales Agent Anetta').item.json.output.properties.subject.description }}\n\nE-mail: {{ $('Sales Agent Anetta').item.json.output.properties.email.description }}",
+        "responseType": "freeText",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        768,
+        0
+      ],
+      "id": "b4aadab2-3243-4a8e-80e7-6765656b1afd",
+      "name": "Request for opinion",
+      "webhookId": "6c2dabc6-78d1-47cf-8c1a-f69824e2a723",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "84jfvOKagv1Nh7pI",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appPqPYHDSlLLIheK",
+          "mode": "list",
+          "cachedResultName": "Human in the loop",
+          "cachedResultUrl": "https://airtable.com/appPqPYHDSlLLIheK"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblcB6VULEcQ7hDSb",
+          "mode": "list",
+          "cachedResultName": "Projects",
+          "cachedResultUrl": "https://airtable.com/appPqPYHDSlLLIheK/tblcB6VULEcQ7hDSb"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        144,
+        352
+      ],
+      "id": "d731c7b2-222d-49cd-a307-a0c2e6cb9c16",
+      "name": "Projects - tabel in database",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "z9oc6y43aBQQqyYE",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        896,
+        368
+      ],
+      "id": "cbb119e9-54bb-4b75-a26b-0f690e80f6fa",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "w1OabuEVbbpBpZw3",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.data.text }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Zatwierdzone",
+              "description": "=\nJeżeli email został przejrzany i zaakceptowany człowiek wytwarza wprost lub pośrednio akceptację, wskazując, że nie są potrzebne żadne zmiany.\nPrzykładowe sformułowania: ,,Wygląda dobrze'', ,,to mi pasuje'', ,,Możesz wysłać\" , ,,Zatwierdzone'', ,,Nie są potrzebne żadne zmiany''."
+            },
+            {
+              "category": "Odrzucone",
+              "description": "=E-mail został przejrzany, ale człowiek prosi o wprowadzenie zmian przed wysłaniem, takich jak poprawki, usunięcie fragmentów, przeredagowanie, itp.\nMoże to obejmować sugerowane decyzje, zmianę sformuowań lub większe przeróbki.\nPrzykładowe sformuowania:\n,,Czy możemy poprawić tę część?\" ,  ,,Wymaga kilka zmian'' ,,Chciałbym to przeredagować\" ,,To nie do końca to - poprawmy to\" ,,Możesz to dostosować przed wysłaniem?'' ,,Nie wspominaj, że nie możemy tego zrobić''"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        976,
+        0
+      ],
+      "id": "f348436d-ab48-4470-9680-04dc21f7fdc6",
+      "name": "Check Information"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=E-mail:{{ $('Set Email').item.json.email }}\n\nFeedback:{{ $('Request for opinion').item.json.data.text }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=Rola\nJesteś ekspertem w pisaniu emaili. Twoim zadaniem jest wziąć otrzymanego emaila i poprawić go na podstawie opinii przesłanej przez osobę.\n\nZasady:\nPodpisuj jaki Kate Wow, CEO at SKYtheLIMIT\n\nOto aktualna data/godzina {{ $now }}. Formatuj datę dd.mm.yyyy."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1328,
+        128
+      ],
+      "id": "ab7efd32-ff43-450e-a9d9-215056b3d04d",
+      "name": "Michael Correction Agent AI"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Airtable Trigger').item.json.fields['E-mail'] }}",
+        "subject": "={{ $('Sales Agent Anetta').item.json.output.properties.subject.description }}",
+        "emailType": "text",
+        "message": "={{ $('Set Email').item.json.email }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1328,
+        -64
+      ],
+      "id": "81941e85-f539-45c4-bf51-0880b8a343e9",
+      "name": "Send an E-mail",
+      "webhookId": "9598f6b6-5694-4c15-87b4-fcaf4fcb1be5",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "84jfvOKagv1Nh7pI",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Airtable Trigger": {
+      "main": [
+        [
+          {
+            "node": "Sales Agent Anetta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Sales Agent Anetta",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Michael Correction Agent AI",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sales Agent Anetta": {
+      "main": [
+        [
+          {
+            "node": "Set Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Sales Agent Anetta",
+            "type": "ai_outputParser",
+            "index": 0
+          },
+          {
+            "node": "Michael Correction Agent AI",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Email": {
+      "main": [
+        [
+          {
+            "node": "Request for opinion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Projects - tabel in database": {
+      "ai_tool": [
+        [
+          {
+            "node": "Sales Agent Anetta",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Request for opinion": {
+      "main": [
+        [
+          {
+            "node": "Check Information",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Check Information",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Information": {
+      "main": [
+        [
+          {
+            "node": "Send an E-mail",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Michael Correction Agent AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Michael Correction Agent AI": {
+      "main": [
+        [
+          {
+            "node": "Set Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "Europe/Warsaw",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "4f0480c2-e803-4e84-936c-f51a76f49ed8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ae002c203006b6472c35ba76f04fe70f5ae8903f2d0b0bcdd00c826bdca880e8"
+  },
+  "id": "j4NePP9qLVi97p6OutPwp",
+  "tags": []
+}
